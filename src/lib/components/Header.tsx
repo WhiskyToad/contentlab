@@ -13,7 +13,7 @@ export function Header({ user, onSignOut }: HeaderProps) {
     <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto max-w-7xl px-6">
         <div className="flex h-14 items-center justify-between">
-          <div className="font-bold text-xl">TanStarter</div>
+          <div className="font-bold text-xl">ContentLab</div>
           <div className="flex items-center gap-4">
             {user ? (
               <>
@@ -30,9 +30,14 @@ export function Header({ user, onSignOut }: HeaderProps) {
                 </Button>
               </>
             ) : (
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/signin" search={{ error: "", redirect: "/" }}>Sign in</Link>
-              </Button>
+              <>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/signin" search={{ error: "", redirect: "/dashboard" }}>Sign in</Link>
+                </Button>
+                <Button asChild size="sm">
+                  <Link to="/signup" search={{ redirect: "/dashboard" }}>Sign up</Link>
+                </Button>
+              </>
             )}
             <ThemeToggle />
           </div>
@@ -40,4 +45,4 @@ export function Header({ user, onSignOut }: HeaderProps) {
       </div>
     </header>
   );
-} 
+}

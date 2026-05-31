@@ -3,42 +3,42 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 export function Features() {
   return (
     <section className="py-32 max-w-5xl mx-auto">
-      <h2 className="text-3xl font-bold text-center mb-16">Features</h2>
+      <h2 className="text-3xl font-bold text-center mb-16">Workspace flow</h2>
       <div className="grid md:grid-cols-3 gap-12">
         <Card className="p-6">
           <CardHeader>
-            <CardTitle>Authentication</CardTitle>
-            <CardDescription>Built-in auth with Supabase</CardDescription>
+            <CardTitle>Capture references</CardTitle>
+            <CardDescription>Save videos into a script library</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Secure authentication system with email/password and social providers.
+              Add URLs, metadata, tags, notes, raw transcripts, and cleaned scripts.
             </p>
           </CardContent>
         </Card>
         <Card className="p-6">
           <CardHeader>
-            <CardTitle>Modern UI</CardTitle>
-            <CardDescription>Beautiful components with shadcn/ui</CardDescription>
+            <CardTitle>Study structure</CardTitle>
+            <CardDescription>Turn messy transcripts into useful references</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Accessible and customizable components built on Radix UI.
+              Extract hooks, beats, CTAs, and notes from the videos you want to learn from.
             </p>
           </CardContent>
         </Card>
         <Card className="p-6">
           <CardHeader>
-            <CardTitle>Type Safety</CardTitle>
-            <CardDescription>Full TypeScript support</CardDescription>
+            <CardTitle>Write your own</CardTitle>
+            <CardDescription>Draft scripts with linked inspiration</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              End-to-end type safety with TanStack Router and TypeScript.
+              Connect each draft to up to five references and move it from idea to posted.
             </p>
           </CardContent>
         </Card>
       </div>
     </section>
   );
-} 
+}

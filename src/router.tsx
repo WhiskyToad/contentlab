@@ -11,7 +11,7 @@ export function getRouter() {
     mutationCache: new MutationCache({
       onSettled: (_, __, ___, mutation) => {
         // Invalidate the specific query that was affected by this mutation
-        const queryKey = mutation.options.mutationKey?.[0]
+        const queryKey = (mutation as { options?: { mutationKey?: unknown[] } }).options?.mutationKey?.[0]
         if (queryKey) {
           queryClient.invalidateQueries({ queryKey: [queryKey] })
         }
@@ -22,7 +22,7 @@ export function getRouter() {
   const router = routerWithQueryClient(
     createTanStackRouter({
       routeTree,
-      context: { queryClient },
+      context: { queryClient, user: null },
       defaultPreload: "intent",
       // react-query will handle data fetching & caching
       // https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#passing-all-loader-events-to-an-external-cache

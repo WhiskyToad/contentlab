@@ -9,21 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
-import { Route as TasksRouteRouteImport } from './routes/tasks/route'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TasksIndexRouteImport } from './routes/tasks/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as DashboardScriptsRouteImport } from './routes/dashboard/scripts'
+import { Route as DashboardResearchRouteImport } from './routes/dashboard/research'
+import { Route as DashboardLibraryRouteImport } from './routes/dashboard/library'
+import { Route as DashboardFilmingRouteImport } from './routes/dashboard/filming'
+import { Route as DashboardAddVideoRouteImport } from './routes/dashboard/add-video'
+import { Route as DashboardVideosVideoIdRouteImport } from './routes/dashboard/videos/$videoId'
+import { Route as DashboardScriptsScriptIdRouteImport } from './routes/dashboard/scripts/$scriptId'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SigninRoute = SigninRouteImport.update({
   id: '/signin',
   path: '/signin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TasksRouteRoute = TasksRouteRouteImport.update({
-  id: '/tasks',
-  path: '/tasks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRouteRoute = DashboardRouteRouteImport.update({
@@ -36,82 +42,155 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TasksIndexRoute = TasksIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => TasksRouteRoute,
-} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardScriptsRoute = DashboardScriptsRouteImport.update({
+  id: '/scripts',
+  path: '/scripts',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardResearchRoute = DashboardResearchRouteImport.update({
+  id: '/research',
+  path: '/research',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardLibraryRoute = DashboardLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardFilmingRoute = DashboardFilmingRouteImport.update({
+  id: '/filming',
+  path: '/filming',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardAddVideoRoute = DashboardAddVideoRouteImport.update({
+  id: '/add-video',
+  path: '/add-video',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardVideosVideoIdRoute = DashboardVideosVideoIdRouteImport.update({
+  id: '/videos/$videoId',
+  path: '/videos/$videoId',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardScriptsScriptIdRoute =
+  DashboardScriptsScriptIdRouteImport.update({
+    id: '/$scriptId',
+    path: '/$scriptId',
+    getParentRoute: () => DashboardScriptsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
-  '/tasks': typeof TasksRouteRouteWithChildren
   '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
+  '/dashboard/add-video': typeof DashboardAddVideoRoute
+  '/dashboard/filming': typeof DashboardFilmingRoute
+  '/dashboard/library': typeof DashboardLibraryRoute
+  '/dashboard/research': typeof DashboardResearchRoute
+  '/dashboard/scripts': typeof DashboardScriptsRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
-  '/tasks/': typeof TasksIndexRoute
+  '/dashboard/scripts/$scriptId': typeof DashboardScriptsScriptIdRoute
+  '/dashboard/videos/$videoId': typeof DashboardVideosVideoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
+  '/dashboard/add-video': typeof DashboardAddVideoRoute
+  '/dashboard/filming': typeof DashboardFilmingRoute
+  '/dashboard/library': typeof DashboardLibraryRoute
+  '/dashboard/research': typeof DashboardResearchRoute
+  '/dashboard/scripts': typeof DashboardScriptsRouteWithChildren
   '/dashboard': typeof DashboardIndexRoute
-  '/tasks': typeof TasksIndexRoute
+  '/dashboard/scripts/$scriptId': typeof DashboardScriptsScriptIdRoute
+  '/dashboard/videos/$videoId': typeof DashboardVideosVideoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
-  '/tasks': typeof TasksRouteRouteWithChildren
   '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
+  '/dashboard/add-video': typeof DashboardAddVideoRoute
+  '/dashboard/filming': typeof DashboardFilmingRoute
+  '/dashboard/library': typeof DashboardLibraryRoute
+  '/dashboard/research': typeof DashboardResearchRoute
+  '/dashboard/scripts': typeof DashboardScriptsRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
-  '/tasks/': typeof TasksIndexRoute
+  '/dashboard/scripts/$scriptId': typeof DashboardScriptsScriptIdRoute
+  '/dashboard/videos/$videoId': typeof DashboardVideosVideoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/dashboard'
-    | '/tasks'
     | '/signin'
+    | '/signup'
+    | '/dashboard/add-video'
+    | '/dashboard/filming'
+    | '/dashboard/library'
+    | '/dashboard/research'
+    | '/dashboard/scripts'
     | '/dashboard/'
-    | '/tasks/'
+    | '/dashboard/scripts/$scriptId'
+    | '/dashboard/videos/$videoId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/signin' | '/dashboard' | '/tasks'
+  to:
+    | '/'
+    | '/signin'
+    | '/signup'
+    | '/dashboard/add-video'
+    | '/dashboard/filming'
+    | '/dashboard/library'
+    | '/dashboard/research'
+    | '/dashboard/scripts'
+    | '/dashboard'
+    | '/dashboard/scripts/$scriptId'
+    | '/dashboard/videos/$videoId'
   id:
     | '__root__'
     | '/'
     | '/dashboard'
-    | '/tasks'
     | '/signin'
+    | '/signup'
+    | '/dashboard/add-video'
+    | '/dashboard/filming'
+    | '/dashboard/library'
+    | '/dashboard/research'
+    | '/dashboard/scripts'
     | '/dashboard/'
-    | '/tasks/'
+    | '/dashboard/scripts/$scriptId'
+    | '/dashboard/videos/$videoId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
-  TasksRouteRoute: typeof TasksRouteRouteWithChildren
   SigninRoute: typeof SigninRoute
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signin': {
       id: '/signin'
       path: '/signin'
       fullPath: '/signin'
       preLoaderRoute: typeof SigninRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tasks': {
-      id: '/tasks'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof TasksRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -128,13 +207,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tasks/': {
-      id: '/tasks/'
-      path: '/'
-      fullPath: '/tasks/'
-      preLoaderRoute: typeof TasksIndexRouteImport
-      parentRoute: typeof TasksRouteRoute
-    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/'
@@ -142,38 +214,98 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/scripts': {
+      id: '/dashboard/scripts'
+      path: '/scripts'
+      fullPath: '/dashboard/scripts'
+      preLoaderRoute: typeof DashboardScriptsRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/research': {
+      id: '/dashboard/research'
+      path: '/research'
+      fullPath: '/dashboard/research'
+      preLoaderRoute: typeof DashboardResearchRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/library': {
+      id: '/dashboard/library'
+      path: '/library'
+      fullPath: '/dashboard/library'
+      preLoaderRoute: typeof DashboardLibraryRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/filming': {
+      id: '/dashboard/filming'
+      path: '/filming'
+      fullPath: '/dashboard/filming'
+      preLoaderRoute: typeof DashboardFilmingRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/add-video': {
+      id: '/dashboard/add-video'
+      path: '/add-video'
+      fullPath: '/dashboard/add-video'
+      preLoaderRoute: typeof DashboardAddVideoRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/videos/$videoId': {
+      id: '/dashboard/videos/$videoId'
+      path: '/videos/$videoId'
+      fullPath: '/dashboard/videos/$videoId'
+      preLoaderRoute: typeof DashboardVideosVideoIdRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/scripts/$scriptId': {
+      id: '/dashboard/scripts/$scriptId'
+      path: '/$scriptId'
+      fullPath: '/dashboard/scripts/$scriptId'
+      preLoaderRoute: typeof DashboardScriptsScriptIdRouteImport
+      parentRoute: typeof DashboardScriptsRoute
+    }
   }
 }
 
+interface DashboardScriptsRouteChildren {
+  DashboardScriptsScriptIdRoute: typeof DashboardScriptsScriptIdRoute
+}
+
+const DashboardScriptsRouteChildren: DashboardScriptsRouteChildren = {
+  DashboardScriptsScriptIdRoute: DashboardScriptsScriptIdRoute,
+}
+
+const DashboardScriptsRouteWithChildren =
+  DashboardScriptsRoute._addFileChildren(DashboardScriptsRouteChildren)
+
 interface DashboardRouteRouteChildren {
+  DashboardAddVideoRoute: typeof DashboardAddVideoRoute
+  DashboardFilmingRoute: typeof DashboardFilmingRoute
+  DashboardLibraryRoute: typeof DashboardLibraryRoute
+  DashboardResearchRoute: typeof DashboardResearchRoute
+  DashboardScriptsRoute: typeof DashboardScriptsRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardVideosVideoIdRoute: typeof DashboardVideosVideoIdRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardAddVideoRoute: DashboardAddVideoRoute,
+  DashboardFilmingRoute: DashboardFilmingRoute,
+  DashboardLibraryRoute: DashboardLibraryRoute,
+  DashboardResearchRoute: DashboardResearchRoute,
+  DashboardScriptsRoute: DashboardScriptsRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardVideosVideoIdRoute: DashboardVideosVideoIdRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
   DashboardRouteRouteChildren,
 )
 
-interface TasksRouteRouteChildren {
-  TasksIndexRoute: typeof TasksIndexRoute
-}
-
-const TasksRouteRouteChildren: TasksRouteRouteChildren = {
-  TasksIndexRoute: TasksIndexRoute,
-}
-
-const TasksRouteRouteWithChildren = TasksRouteRoute._addFileChildren(
-  TasksRouteRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
-  TasksRouteRoute: TasksRouteRouteWithChildren,
   SigninRoute: SigninRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

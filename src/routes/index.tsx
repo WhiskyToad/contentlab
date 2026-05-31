@@ -7,7 +7,7 @@ import { Footer } from "~/lib/components/Footer";
 import { User } from "@supabase/supabase-js";
 
 // Create a server function for sign out
-export const signOutFn = createServerFn().handler(async () => {
+export const signOutFn = createServerFn({ method: "POST" }).handler(async () => {
   const { getSupabaseServerClient } = await import("~/lib/server/auth");
   const supabase = getSupabaseServerClient();
   const { error } = await supabase.auth.signOut();
@@ -35,7 +35,7 @@ function Home() {
       await signOutFn();
       // Refresh the router data
       await router.invalidate();
-      router.navigate({ to: "/signin", search: { error: "", redirect: "/" } });
+      router.navigate({ to: "/signin", search: { error: "", redirect: "/dashboard" } });
     } catch (error) {
       console.error("Error signing out:", error);
     }

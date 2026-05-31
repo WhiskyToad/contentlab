@@ -20,7 +20,7 @@ interface UserData {
   app_metadata: { [key: string]: object };
 }
 
-const getUser = createServerFn({ method: "GET" }).handler(async () => {
+const getUser = createServerFn({ method: "POST" }).handler(async () => {
   const { getSupabaseServerClient } = await import("~/lib/server/auth");
   const supabase = getSupabaseServerClient();
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -60,7 +60,7 @@ export const Route = createRootRouteWithContext<{
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Supabase Router",
+        title: "ContentLab",
       },
     ],
     links: [{ rel: "stylesheet", href: appCss }],

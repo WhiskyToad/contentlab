@@ -7,13 +7,12 @@ function requireEnv(name: string): string {
 }
 
 export function getSupabaseAnonClient() {
-  return createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_ANON_KEY'))
+  return createClient(requireEnv('VITE_SUPABASE_URL'), requireEnv('VITE_SUPABASE_KEY'))
 }
 
 export function getSupabaseServiceRoleClient() {
   return createClient(
-    requireEnv('SUPABASE_URL'),
+    requireEnv('VITE_SUPABASE_URL'),
     requireEnv('SUPABASE_SERVICE_ROLE_KEY')
   )
 }
-
