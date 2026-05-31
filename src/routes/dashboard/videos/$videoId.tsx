@@ -1,22 +1,29 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Wand2 } from "lucide-react";
 import { Button } from "~/lib/components/ui/button";
 import { Input } from "~/lib/components/ui/input";
 import { Label } from "~/lib/components/ui/label";
-import { getVideoDetail, runScriptHelper, updateVideo } from "~/lib/server/content-actions";
+import { useScriptHelperMutation, useUpdateVideoMutation, useVideoDetail } from "~/lib/queries/content";
 import { formatDuration, parseTags } from "~/lib/video-utils";
-import type { AiHelperAction, VideoStatus } from "~/schema";
+import type { AiHelperAction, Video, VideoStatus } from "~/schema";
 
 export const Route = createFileRoute("/dashboard/videos/$videoId")({
-  loader: ({ params }) => getVideoDetail({ data: { id: params.videoId } }),
   component: VideoDetail,
 });
 
 function VideoDetail() {
-  const video = Route.useLoaderData();
-  const router = useRouter();
+  const { videoId } = Route.useParams();
+  const videoQuery = useVideoDetail(videoId);
+
+  if (videoQuery.isLoading) return <LoadingState label="Loading reference..." />;
+  if (videoQuery.error) return <ErrorState message={videoQuery.error.message} />;
+  if (!videoQuery.data) return <ErrorState message="Reference not found." />;
+
+  return <VideoDetailForm video={videoQuery.data} />;
+}
+
+function VideoDetailForm({ video }: { video: Video }) {
   const [activeTab, setActiveTab] = useState<"transcript" | "clean" | "notes">("transcript");
   const [title, setTitle] = useState(video.title ?? "");
   const [creator, setCreator] = useState(video.creator ?? "");
@@ -32,39 +39,10 @@ function VideoDetail() {
   const [helperAction, setHelperAction] = useState<AiHelperAction>("clean_transcript");
   const [helperResult, setHelperResult] = useState("");
 
-  const saveMutation = useMutation({
-    mutationFn: () =>
-      updateVideo({
-        data: {
-          id: video.id,
-          title,
-          creator,
-          caption,
-          thumbnail_url: thumbnailUrl,
-          niche,
-          format,
-          tags: parseTags(tags),
-          status,
-          raw_transcript: rawTranscript,
-          clean_script: cleanScript,
-          notes,
-        },
-      }),
-    onSuccess: async () => {
-      await router.invalidate();
-    },
-  });
+  const saveMutation = useUpdateVideoMutation();
+  const updateNotesMutation = useUpdateVideoMutation();
 
-  const helperMutation = useMutation({
-    mutationFn: () =>
-      runScriptHelper({
-        data: {
-          entityType: "video",
-          entityId: video.id,
-          action: helperAction,
-          input: helperAction === "clean_transcript" ? rawTranscript : cleanScript || rawTranscript,
-        },
-      }),
+  const helperMutation = useScriptHelperMutation({
     onSuccess: async (result) => {
       const rendered = renderHelperResult(result);
       setHelperResult(rendered);
@@ -74,16 +52,28 @@ function VideoDetail() {
       } else if (rendered) {
         const nextNotes = [notes, `AI helper: ${helperLabel(helperAction)}`, rendered].filter(Boolean).join("\n\n");
         setNotes(nextNotes);
-        await updateVideo({ data: { id: video.id, notes: nextNotes } });
+        await updateNotesMutation.mutateAsync({ id: video.id, notes: nextNotes });
         setActiveTab("notes");
       }
-      await router.invalidate();
     },
   });
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
-    await saveMutation.mutateAsync();
+    await saveMutation.mutateAsync({
+      id: video.id,
+      title,
+      creator,
+      caption,
+      thumbnail_url: thumbnailUrl,
+      niche,
+      format,
+      tags: parseTags(tags),
+      status,
+      raw_transcript: rawTranscript,
+      clean_script: cleanScript,
+      notes,
+    });
   };
 
   return (
@@ -99,7 +89,26 @@ function VideoDetail() {
             {video.view_count ? <Pill>{video.view_count.toLocaleString()} views</Pill> : null}
           </div>
         </div>
-        <Button type="button" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+        <Button
+          type="button"
+          onClick={() =>
+            saveMutation.mutate({
+              id: video.id,
+              title,
+              creator,
+              caption,
+              thumbnail_url: thumbnailUrl,
+              niche,
+              format,
+              tags: parseTags(tags),
+              status,
+              raw_transcript: rawTranscript,
+              clean_script: cleanScript,
+              notes,
+            })
+          }
+          disabled={saveMutation.isPending}
+        >
           {saveMutation.isPending ? "Saving" : "Save reference"}
         </Button>
       </div>
@@ -161,7 +170,18 @@ function VideoDetail() {
                   <option value="list_beats">List beats</option>
                 </select>
               </div>
-              <Button type="button" onClick={() => helperMutation.mutate()} disabled={helperMutation.isPending}>
+              <Button
+                type="button"
+                onClick={() =>
+                  helperMutation.mutate({
+                    entityType: "video",
+                    entityId: video.id,
+                    action: helperAction,
+                    input: helperAction === "clean_transcript" ? rawTranscript : cleanScript || rawTranscript,
+                  })
+                }
+                disabled={helperMutation.isPending || updateNotesMutation.isPending}
+              >
                 <Wand2 />
                 {helperMutation.isPending ? "Working" : "Run helper"}
               </Button>
@@ -200,6 +220,14 @@ function VideoDetail() {
       </form>
     </div>
   );
+}
+
+function LoadingState({ label }: { label: string }) {
+  return <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">{label}</div>;
+}
+
+function ErrorState({ message }: { message: string }) {
+  return <div className="rounded-md border border-destructive/30 bg-card p-4 text-sm text-destructive">{message}</div>;
 }
 
 function Field({

@@ -4,21 +4,17 @@ import { Search } from "lucide-react";
 import { Button } from "~/lib/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/lib/components/ui/card";
 import { Input } from "~/lib/components/ui/input";
-import { getWorkspaceData } from "~/lib/server/content-actions";
+import { useWorkspaceData } from "~/lib/queries/content";
 import { formatDuration } from "~/lib/video-utils";
 import type { VideoPlatform, VideoStatus } from "~/schema";
 
 export const Route = createFileRoute("/dashboard/library")({
-  loader: ({ context }) =>
-    context.queryClient.fetchQuery({
-      queryKey: ["workspace"],
-      queryFn: () => getWorkspaceData(),
-    }),
   component: LibraryPage,
 });
 
 function LibraryPage() {
-  const { videos } = Route.useLoaderData();
+  const workspaceQuery = useWorkspaceData();
+  const { videos = [] } = workspaceQuery.data ?? {};
   const [query, setQuery] = useState("");
   const [platformFilter, setPlatformFilter] = useState<"all" | VideoPlatform>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | VideoStatus>("all");
@@ -72,6 +68,8 @@ function LibraryPage() {
           <option value="archived">Archived</option>
         </FilterSelect>
       </div>
+      {workspaceQuery.isLoading ? <LoadingState label="Loading library..." /> : null}
+      {workspaceQuery.error ? <ErrorState message={workspaceQuery.error.message} /> : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filteredVideos.map((video) => (
@@ -107,6 +105,14 @@ function LibraryPage() {
       </div>
     </div>
   );
+}
+
+function LoadingState({ label }: { label: string }) {
+  return <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">{label}</div>;
+}
+
+function ErrorState({ message }: { message: string }) {
+  return <div className="rounded-md border border-destructive/30 bg-card p-4 text-sm text-destructive">{message}</div>;
 }
 
 function Pill({ children }: { children: React.ReactNode }) {

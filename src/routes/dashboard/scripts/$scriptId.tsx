@@ -1,22 +1,37 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Wand2 } from "lucide-react";
 import { Button } from "~/lib/components/ui/button";
 import { Input } from "~/lib/components/ui/input";
 import { Label } from "~/lib/components/ui/label";
-import { getScriptDetail, runScriptHelper, updateScript } from "~/lib/server/content-actions";
+import { useScriptDetail, useScriptHelperMutation, useUpdateScriptMutation } from "~/lib/queries/content";
 import { parseTags } from "~/lib/video-utils";
-import type { AiHelperAction, ScriptStatus } from "~/schema";
+import type { AiHelperAction, Script, ScriptReference, ScriptStatus, Video } from "~/schema";
 
 export const Route = createFileRoute("/dashboard/scripts/$scriptId")({
-  loader: ({ params }) => getScriptDetail({ data: { id: params.scriptId } }),
   component: ScriptDetail,
 });
 
 function ScriptDetail() {
-  const { script, references, videos } = Route.useLoaderData();
-  const router = useRouter();
+  const { scriptId } = Route.useParams();
+  const scriptQuery = useScriptDetail(scriptId);
+
+  if (scriptQuery.isLoading) return <LoadingState label="Loading script..." />;
+  if (scriptQuery.error) return <ErrorState message={scriptQuery.error.message} />;
+  if (!scriptQuery.data) return <ErrorState message="Script not found." />;
+
+  return <ScriptDetailForm {...scriptQuery.data} />;
+}
+
+function ScriptDetailForm({
+  script,
+  references,
+  videos,
+}: {
+  script: Script;
+  references: ScriptReference[];
+  videos: Video[];
+}) {
   const [title, setTitle] = useState(script.title);
   const [hook, setHook] = useState(script.hook);
   const [body, setBody] = useState(script.body);
@@ -28,37 +43,10 @@ function ScriptDetail() {
   const [helperAction, setHelperAction] = useState<AiHelperAction>("alternate_hooks");
   const [helperResult, setHelperResult] = useState("");
 
-  const saveMutation = useMutation({
-    mutationFn: () =>
-      updateScript({
-        data: {
-          id: script.id,
-          title,
-          hook,
-          body,
-          cta,
-          notes,
-          status,
-          tags: parseTags(tags),
-          reference_video_ids: referenceIds,
-        },
-      }),
-    onSuccess: async () => {
-      await router.invalidate();
-    },
-  });
+  const saveMutation = useUpdateScriptMutation();
 
-  const helperMutation = useMutation({
-    mutationFn: () =>
-      runScriptHelper({
-        data: {
-          entityType: "script",
-          entityId: script.id,
-          action: helperAction,
-          input: [title, hook, body, cta, notes].filter(Boolean).join("\n\n"),
-        },
-      }),
-    onSuccess: async (result) => {
+  const helperMutation = useScriptHelperMutation({
+    onSuccess: (result) => {
       const rendered = renderHelperResult(result);
       setHelperResult(rendered);
       if (result.hook) setHook(result.hook);
@@ -67,7 +55,6 @@ function ScriptDetail() {
       if (result.summary || result.beats?.length || result.notes) {
         setNotes([result.summary, ...(result.beats ?? []), result.notes].filter(Boolean).join("\n"));
       }
-      await router.invalidate();
     },
   });
 
@@ -81,7 +68,17 @@ function ScriptDetail() {
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
-    await saveMutation.mutateAsync();
+    await saveMutation.mutateAsync({
+      id: script.id,
+      title,
+      hook,
+      body,
+      cta,
+      notes,
+      status,
+      tags: parseTags(tags),
+      reference_video_ids: referenceIds,
+    });
   };
 
   return (
@@ -132,7 +129,18 @@ function ScriptDetail() {
           <section className="rounded-md border bg-card p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold">Script helper</h2>
-              <Button type="button" onClick={() => helperMutation.mutate()} disabled={helperMutation.isPending}>
+              <Button
+                type="button"
+                onClick={() =>
+                  helperMutation.mutate({
+                    entityType: "script",
+                    entityId: script.id,
+                    action: helperAction,
+                    input: [title, hook, body, cta, notes].filter(Boolean).join("\n\n"),
+                  })
+                }
+                disabled={helperMutation.isPending}
+              >
                 <Wand2 />
                 {helperMutation.isPending ? "Working" : "Run"}
               </Button>
@@ -181,6 +189,14 @@ function ScriptDetail() {
       </div>
     </form>
   );
+}
+
+function LoadingState({ label }: { label: string }) {
+  return <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">{label}</div>;
+}
+
+function ErrorState({ message }: { message: string }) {
+  return <div className="rounded-md border border-destructive/30 bg-card p-4 text-sm text-destructive">{message}</div>;
 }
 
 function Field({

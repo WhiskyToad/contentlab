@@ -1,27 +1,21 @@
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { FileText, Plus, Search, Sparkles, Video } from "lucide-react";
 import { Button } from "~/lib/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/lib/components/ui/card";
 import { Input } from "~/lib/components/ui/input";
 import { Label } from "~/lib/components/ui/label";
-import { createScript, createVideoFromUrl, getWorkspaceData } from "~/lib/server/content-actions";
+import { useCreateScriptMutation, useCreateVideoMutation, useWorkspaceData } from "~/lib/queries/content";
 import { formatDuration } from "~/lib/video-utils";
 import type { ScriptStatus, VideoPlatform, VideoStatus } from "~/schema";
 
 export const Route = createFileRoute("/dashboard/")({
   component: DashboardIndex,
-  loader: async ({ context }) => {
-    return context.queryClient.fetchQuery({
-      queryKey: ["workspace"],
-      queryFn: () => getWorkspaceData(),
-    });
-  },
 });
 
 function DashboardIndex() {
-  const { videos, scripts } = Route.useLoaderData();
+  const workspaceQuery = useWorkspaceData();
+  const { videos = [], scripts = [] } = workspaceQuery.data ?? {};
   const router = useRouter();
   const [videoUrl, setVideoUrl] = useState("");
   const [scriptTitle, setScriptTitle] = useState("");
@@ -30,29 +24,15 @@ function DashboardIndex() {
   const [scriptStatusFilter, setScriptStatusFilter] = useState<"all" | ScriptStatus>("all");
   const [query, setQuery] = useState("");
 
-  const createVideoMutation = useMutation({
-    mutationFn: () =>
-      createVideoFromUrl({
-        data: {
-          url: videoUrl,
-        },
-      }),
-    onSuccess: async () => {
+  const createVideoMutation = useCreateVideoMutation({
+    onSuccess: () => {
       setVideoUrl("");
-      await router.invalidate();
     },
   });
 
-  const createScriptMutation = useMutation({
-    mutationFn: () =>
-      createScript({
-        data: {
-          title: scriptTitle,
-        },
-      }),
-    onSuccess: async (script) => {
+  const createScriptMutation = useCreateScriptMutation({
+    onSuccess: (script) => {
       setScriptTitle("");
-      await router.invalidate();
       router.navigate({ to: "/dashboard/scripts/$scriptId", params: { scriptId: script.id } });
     },
   });
@@ -81,13 +61,13 @@ function DashboardIndex() {
   const handleCreateVideo = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!videoUrl.trim()) return;
-    await createVideoMutation.mutateAsync();
+    await createVideoMutation.mutateAsync({ url: videoUrl });
   };
 
   const handleCreateScript = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!scriptTitle.trim()) return;
-    await createScriptMutation.mutateAsync();
+    await createScriptMutation.mutateAsync({ title: scriptTitle });
   };
 
   return (
@@ -103,6 +83,8 @@ function DashboardIndex() {
           <Metric label="Ready" value={readyScripts} />
         </div>
       </div>
+      {workspaceQuery.isLoading ? <LoadingState label="Loading workspace..." /> : null}
+      {workspaceQuery.error ? <ErrorState message={workspaceQuery.error.message} /> : null}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <section className="rounded-md border bg-card p-5">
@@ -267,6 +249,14 @@ function DashboardIndex() {
       </section>
     </div>
   );
+}
+
+function LoadingState({ label }: { label: string }) {
+  return <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">{label}</div>;
+}
+
+function ErrorState({ message }: { message: string }) {
+  return <div className="rounded-md border border-destructive/30 bg-card p-4 text-sm text-destructive">{message}</div>;
 }
 
 function PipelineCard({ label, value, detail }: { label: string; value: number; detail: string }) {

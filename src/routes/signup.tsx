@@ -1,7 +1,7 @@
 import { Link, createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "~/lib/components/ui/button";
-import { AuthCredentialsSchema, signUpFn } from "~/lib/server/auth-actions";
+import { AuthCredentialsSchema, useSignUpMutation } from "~/lib/queries/auth";
 import {
   Alert,
   AuthShell,
@@ -35,23 +35,9 @@ function SignUpPage() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [authMessage, setAuthMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSignUp = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setAuthError("");
-    setAuthMessage("");
-
-    const validatedCredentials = AuthCredentialsSchema.safeParse({ email, password });
-    if (!validatedCredentials.success) {
-      setAuthError(validatedCredentials.error.errors[0]?.message ?? "Check your email and password.");
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      const result = await signUpFn({ data: validatedCredentials.data });
-
+  const signUpMutation = useSignUpMutation({
+    onSuccess: async (result) => {
       if (result?.error) {
         setAuthError(result.message || "Could not create account");
         return;
@@ -64,12 +50,25 @@ function SignUpPage() {
 
       await router.invalidate();
       router.navigate({ to: search.redirect || REDIRECT_URL });
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Sign up error:", error);
-      setAuthError(error instanceof Error ? error.message : "Could not create account");
-    } finally {
-      setIsSubmitting(false);
+      setAuthError(error.message || "Could not create account");
+    },
+  });
+
+  const handleSignUp = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setAuthError("");
+    setAuthMessage("");
+
+    const validatedCredentials = AuthCredentialsSchema.safeParse({ email, password });
+    if (!validatedCredentials.success) {
+      setAuthError(validatedCredentials.error.errors[0]?.message ?? "Check your email and password.");
+      return;
     }
+
+    await signUpMutation.mutateAsync(validatedCredentials.data);
   };
 
   return (
@@ -99,8 +98,8 @@ function SignUpPage() {
           onEmailChange={setEmail}
           onPasswordChange={setPassword}
         />
-        <Button type="submit" className="w-full" disabled={isSubmitting || Boolean(authMessage)}>
-          {isSubmitting ? "Creating account..." : "Create account"}
+        <Button type="submit" className="w-full" disabled={signUpMutation.isPending || Boolean(authMessage)}>
+          {signUpMutation.isPending ? "Creating account..." : "Create account"}
         </Button>
       </form>
 

@@ -1,32 +1,25 @@
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Button } from "~/lib/components/ui/button";
 import { Input } from "~/lib/components/ui/input";
 import { Label } from "~/lib/components/ui/label";
-import { createScript, getWorkspaceData } from "~/lib/server/content-actions";
+import { useCreateScriptMutation, useWorkspaceData } from "~/lib/queries/content";
 import type { ScriptStatus } from "~/schema";
 
 export const Route = createFileRoute("/dashboard/scripts")({
-  loader: ({ context }) =>
-    context.queryClient.fetchQuery({
-      queryKey: ["workspace"],
-      queryFn: () => getWorkspaceData(),
-    }),
   component: ScriptsPage,
 });
 
 function ScriptsPage() {
-  const { scripts } = Route.useLoaderData();
+  const workspaceQuery = useWorkspaceData();
+  const { scripts = [] } = workspaceQuery.data ?? {};
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | ScriptStatus>("all");
 
-  const createScriptMutation = useMutation({
-    mutationFn: () => createScript({ data: { title } }),
-    onSuccess: async (script) => {
+  const createScriptMutation = useCreateScriptMutation({
+    onSuccess: (script) => {
       setTitle("");
-      await router.invalidate();
       router.navigate({ to: "/dashboard/scripts/$scriptId", params: { scriptId: script.id } });
     },
   });
@@ -39,7 +32,7 @@ function ScriptsPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!title.trim()) return;
-    await createScriptMutation.mutateAsync();
+    await createScriptMutation.mutateAsync({ title });
   };
 
   return (
@@ -82,6 +75,8 @@ function ScriptsPage() {
           <option value="posted">Posted</option>
         </select>
       </div>
+      {workspaceQuery.isLoading ? <LoadingState label="Loading scripts..." /> : null}
+      {workspaceQuery.error ? <ErrorState message={workspaceQuery.error.message} /> : null}
 
       <div className="grid gap-3">
         {filteredScripts.map((script) => (
@@ -106,6 +101,14 @@ function ScriptsPage() {
       </div>
     </div>
   );
+}
+
+function LoadingState({ label }: { label: string }) {
+  return <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">{label}</div>;
+}
+
+function ErrorState({ message }: { message: string }) {
+  return <div className="rounded-md border border-destructive/30 bg-card p-4 text-sm text-destructive">{message}</div>;
 }
 
 function Pill({ children }: { children: React.ReactNode }) {

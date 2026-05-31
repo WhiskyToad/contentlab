@@ -1,12 +1,11 @@
 import { Link, createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
 import { useState } from "react";
-import authClient from "~/lib/auth-client";
 import { Button } from "~/lib/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/lib/components/ui/card";
 import { Input } from "~/lib/components/ui/input";
 import { Label } from "~/lib/components/ui/label";
-import { AuthCredentialsSchema, signInFn } from "~/lib/server/auth-actions";
+import { AuthCredentialsSchema, useOAuthSignInMutation, useSignInMutation } from "~/lib/queries/auth";
 import { cn } from "~/lib/utils";
 
 const REDIRECT_URL = "/dashboard";
@@ -34,7 +33,22 @@ function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const signInMutation = useSignInMutation({
+    onSuccess: async (result) => {
+      if (result?.error) {
+        setAuthError(result.message || "Authentication failed");
+        return;
+      }
+
+      await router.invalidate();
+      router.navigate({ to: search.redirect || REDIRECT_URL });
+    },
+    onError: (error) => {
+      console.error("Sign in error:", error);
+      setAuthError(error.message || "Authentication failed");
+    },
+  });
 
   const handleSignIn = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -46,23 +60,7 @@ function SignInPage() {
       return;
     }
 
-    try {
-      setIsSubmitting(true);
-      const result = await signInFn({ data: validatedCredentials.data });
-
-      if (result?.error) {
-        setAuthError(result.message || "Authentication failed");
-        return;
-      }
-
-      await router.invalidate();
-      router.navigate({ to: search.redirect || REDIRECT_URL });
-    } catch (error) {
-      console.error("Sign in error:", error);
-      setAuthError(error instanceof Error ? error.message : "Authentication failed");
-    } finally {
-      setIsSubmitting(false);
-    }
+    await signInMutation.mutateAsync(validatedCredentials.data);
   };
 
   return (
@@ -96,8 +94,8 @@ function SignInPage() {
           onEmailChange={setEmail}
           onPasswordChange={setPassword}
         />
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Signing in..." : "Sign in"}
+        <Button type="submit" className="w-full" disabled={signInMutation.isPending}>
+          {signInMutation.isPending ? "Signing in..." : "Sign in"}
         </Button>
       </form>
 
@@ -235,20 +233,18 @@ interface ProviderButtonProps extends ComponentProps<typeof Button> {
 
 function ProviderButton({ provider, label, redirectTo, className, ...props }: ProviderButtonProps) {
   const router = useRouter();
-  const handleOAuthSignIn = async () => {
-    try {
-      const { data, error } = await authClient.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}${redirectTo}`,
-        },
-      });
-      if (error) throw error;
+  const oauthSignInMutation = useOAuthSignInMutation({
+    onSuccess: async (result) => {
       await router.invalidate();
-      if (data.url) window.location.href = data.url;
-    } catch (error) {
+      if (result.url) window.location.href = result.url;
+    },
+    onError: (error) => {
       console.error("OAuth sign in error:", error);
-    }
+    },
+  });
+
+  const handleOAuthSignIn = async () => {
+    await oauthSignInMutation.mutateAsync({ provider, redirectTo });
   };
 
   return (
@@ -258,6 +254,7 @@ function ProviderButton({ provider, label, redirectTo, className, ...props }: Pr
       size="lg"
       className={cn("text-white hover:text-white", className)}
       {...props}
+      disabled={oauthSignInMutation.isPending || props.disabled}
     >
       Continue with {label}
     </Button>

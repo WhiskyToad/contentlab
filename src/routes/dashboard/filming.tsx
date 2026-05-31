@@ -1,29 +1,17 @@
-import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { Button } from "~/lib/components/ui/button";
-import { getWorkspaceData, updateScript } from "~/lib/server/content-actions";
-import type { ScriptStatus } from "~/schema";
+import { useUpdateScriptMutation, useWorkspaceData } from "~/lib/queries/content";
 
 export const Route = createFileRoute("/dashboard/filming")({
-  loader: ({ context }) =>
-    context.queryClient.fetchQuery({
-      queryKey: ["workspace"],
-      queryFn: () => getWorkspaceData(),
-    }),
   component: FilmingPage,
 });
 
 function FilmingPage() {
-  const { scripts } = Route.useLoaderData();
-  const router = useRouter();
+  const workspaceQuery = useWorkspaceData();
+  const { scripts = [] } = workspaceQuery.data ?? {};
   const queue = scripts.filter((script) => ["ready", "filmed", "posted"].includes(script.status));
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: ScriptStatus }) => updateScript({ data: { id, status } }),
-    onSuccess: async () => {
-      await router.invalidate();
-    },
-  });
+  const updateStatusMutation = useUpdateScriptMutation();
 
   return (
     <div className="space-y-6">
@@ -31,6 +19,8 @@ function FilmingPage() {
         <p className="text-sm font-medium text-muted-foreground">Production</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">Filming queue</h1>
       </div>
+      {workspaceQuery.isLoading ? <LoadingState label="Loading filming queue..." /> : null}
+      {workspaceQuery.error ? <ErrorState message={workspaceQuery.error.message} /> : null}
 
       <div className="grid gap-3">
         {queue.length ? (
@@ -74,6 +64,14 @@ function FilmingPage() {
       </div>
     </div>
   );
+}
+
+function LoadingState({ label }: { label: string }) {
+  return <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">{label}</div>;
+}
+
+function ErrorState({ message }: { message: string }) {
+  return <div className="rounded-md border border-destructive/30 bg-card p-4 text-sm text-destructive">{message}</div>;
 }
 
 function Pill({ children }: { children: React.ReactNode }) {

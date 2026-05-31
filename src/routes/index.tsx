@@ -1,22 +1,10 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { Header } from "~/lib/components/Header";
 import { Hero } from "~/lib/components/Hero";
 import { Features } from "~/lib/components/Features";
 import { Footer } from "~/lib/components/Footer";
 import { User } from "@supabase/supabase-js";
-
-// Create a server function for sign out
-export const signOutFn = createServerFn({ method: "POST" }).handler(async () => {
-  const { getSupabaseServerClient } = await import("~/lib/server/auth");
-  const supabase = getSupabaseServerClient();
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    console.error("Sign out error:", error);
-    return { error: true, message: error.message };
-  }
-  return { success: true };
-});
+import { useSignOutMutation } from "~/lib/queries/auth";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -29,16 +17,23 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { user } = Route.useLoaderData();
   const router = useRouter();
+  const signOutMutation = useSignOutMutation({
+    onSuccess: async (result) => {
+      if (result?.error) {
+        console.error("Error signing out:", result.message);
+        return;
+      }
 
-  const handleSignOut = async () => {
-    try {
-      await signOutFn();
-      // Refresh the router data
       await router.invalidate();
       router.navigate({ to: "/signin", search: { error: "", redirect: "/dashboard" } });
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error signing out:", error);
-    }
+    },
+  });
+
+  const handleSignOut = async () => {
+    await signOutMutation.mutateAsync();
   };
 
   return (

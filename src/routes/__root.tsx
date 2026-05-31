@@ -6,48 +6,21 @@ import {
   ScriptOnce,
   Scripts,
 } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import appCss from "~/lib/styles/app.css?url";
-
-interface UserData {
-  id: string;
-  email?: string;
-  user_metadata: { [key: string]: object };
-  app_metadata: { [key: string]: object };
-}
-
-const getUser = createServerFn({ method: "POST" }).handler(async () => {
-  const { getSupabaseServerClient } = await import("~/lib/server/auth");
-  const supabase = getSupabaseServerClient();
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) {
-      console.warn("Auth error:", error);
-      return null;
-    }
-    if (!user) return null;
-    
-    // Return only serializable user data
-    const { id, email, user_metadata, app_metadata } = user;
-    return { id, email, user_metadata, app_metadata } as UserData;
-  });
+import { authQueryKeys, authQueryOptions } from "~/lib/queries/auth";
+import type { UserData } from "~/lib/queries/auth";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
-  user: Awaited<ReturnType<typeof getUser>>;
+  user: UserData | null;
 }>()({
   beforeLoad: async ({ context }) => {
-    // Invalidate the user query to ensure fresh data
-    await context.queryClient.invalidateQueries({ queryKey: ["user"] });
-    
-    const user = await context.queryClient.fetchQuery({
-      queryKey: ["user"],
-      queryFn: ({ signal }) => getUser({ signal }),
-      staleTime: 0, // Consider the data stale immediately
-    });
+    await context.queryClient.invalidateQueries({ queryKey: authQueryKeys.user() });
+    const user = await context.queryClient.fetchQuery(authQueryOptions.user());
     return { user };
   },
   head: () => ({

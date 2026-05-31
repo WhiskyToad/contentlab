@@ -1,11 +1,10 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
 import { Link2, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Button } from "~/lib/components/ui/button";
 import { Input } from "~/lib/components/ui/input";
 import { Label } from "~/lib/components/ui/label";
-import { createVideoFromUrl } from "~/lib/server/content-actions";
+import { useCreateVideoMutation } from "~/lib/queries/content";
 
 export const Route = createFileRoute("/dashboard/add-video")({
   component: AddVideoPage,
@@ -15,11 +14,9 @@ function AddVideoPage() {
   const router = useRouter();
   const [url, setUrl] = useState("");
 
-  const createVideoMutation = useMutation({
-    mutationFn: () => createVideoFromUrl({ data: { url } }),
-    onSuccess: async (video) => {
+  const createVideoMutation = useCreateVideoMutation({
+    onSuccess: (video) => {
       setUrl("");
-      await router.invalidate();
       router.navigate({ to: "/dashboard/videos/$videoId", params: { videoId: video.id } });
     },
   });
@@ -27,7 +24,7 @@ function AddVideoPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!url.trim()) return;
-    await createVideoMutation.mutateAsync();
+    await createVideoMutation.mutateAsync({ url });
   };
 
   return (

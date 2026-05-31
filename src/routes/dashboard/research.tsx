@@ -1,17 +1,13 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { getWorkspaceData } from "~/lib/server/content-actions";
+import { useWorkspaceData } from "~/lib/queries/content";
 
 export const Route = createFileRoute("/dashboard/research")({
-  loader: ({ context }) =>
-    context.queryClient.fetchQuery({
-      queryKey: ["workspace"],
-      queryFn: () => getWorkspaceData(),
-    }),
   component: ResearchPage,
 });
 
 function ResearchPage() {
-  const { videos } = Route.useLoaderData();
+  const workspaceQuery = useWorkspaceData();
+  const { videos = [] } = workspaceQuery.data ?? {};
   const tagCounts = countValues(videos.flatMap((video) => video.tags));
   const nicheCounts = countValues(videos.map((video) => video.niche).filter(Boolean) as string[]);
   const needsTranscript = videos.filter((video) => !video.raw_transcript && !video.clean_script);
@@ -22,6 +18,8 @@ function ResearchPage() {
         <p className="text-sm font-medium text-muted-foreground">Research overview</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">Patterns and gaps</h1>
       </div>
+      {workspaceQuery.isLoading ? <LoadingState label="Loading research..." /> : null}
+      {workspaceQuery.error ? <ErrorState message={workspaceQuery.error.message} /> : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <StatsPanel title="Top tags" items={tagCounts} empty="No tags inferred yet." />
@@ -50,6 +48,14 @@ function ResearchPage() {
       </section>
     </div>
   );
+}
+
+function LoadingState({ label }: { label: string }) {
+  return <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">{label}</div>;
+}
+
+function ErrorState({ message }: { message: string }) {
+  return <div className="rounded-md border border-destructive/30 bg-card p-4 text-sm text-destructive">{message}</div>;
 }
 
 function countValues(values: string[]) {

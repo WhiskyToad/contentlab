@@ -1,43 +1,13 @@
 import { Link, Outlet, createFileRoute, redirect } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { BarChart3, FileText, Home, Library, Plus, Video } from "lucide-react";
 import ThemeToggle from "~/lib/components/ThemeToggle";
-
-// Create a server function to check authentication
-const checkAuth = createServerFn({ method: "POST" }).handler(async () => {
-  try {
-    const { getSupabaseServerClient } = await import("~/lib/server/auth");
-    const supabase = getSupabaseServerClient();
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
-    if (error || !user) {
-      return { authenticated: false };
-    }
-    
-    // Return only serializable user data
-    const { id, email, user_metadata, app_metadata } = user;
-    return { 
-      authenticated: true,
-      user: { id, email, user_metadata, app_metadata }
-    };
-  } catch (error) {
-    console.error(error);
-    return { authenticated: false };
-  }
-});
+import { authQueryKeys, authQueryOptions } from "~/lib/queries/auth";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardLayout,
   loader: async ({ context }) => {
-    // Invalidate the query to ensure fresh data
-    await context.queryClient.invalidateQueries({ queryKey: ["dashboard-auth"] });
-    
-    // Use the server function to check authentication
-    const result = await context.queryClient.fetchQuery({
-      queryKey: ["dashboard-auth"],
-      queryFn: () => checkAuth(),
-      staleTime: 0, // Consider the data stale immediately
-    });
+    await context.queryClient.invalidateQueries({ queryKey: authQueryKeys.dashboard() });
+    const result = await context.queryClient.fetchQuery(authQueryOptions.dashboard());
 
     if (!result.authenticated) {
       throw redirect({
