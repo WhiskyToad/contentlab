@@ -1,4 +1,5 @@
 import { parseIsoDuration } from '~/lib/video-utils'
+import type { TablesInsert } from '~/lib/database.types'
 
 interface YouTubeVideoResponse {
   items?: Array<{
@@ -32,7 +33,7 @@ function toNullableNumber(value: string | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-export async function fetchYouTubeMetadata(videoId: string) {
+export async function fetchYouTubeMetadata(videoId: string): Promise<Partial<TablesInsert<'videos'>>> {
   const apiKey = process.env.YOUTUBE_API_KEY
   if (!apiKey) return {}
 

@@ -9,10 +9,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "ui": "npx -y shadcn@canary",
-    "db:seed": "supabase db reset",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:seed": "supabase db reset"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.2",
@@ -31,9 +28,7 @@
     "@vitejs/plugin-react": "^5.1.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "drizzle-orm": "^0.44.2",
     "lucide-react": "^0.563.0",
-    "pg": "^8.13.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.2",
@@ -47,11 +42,9 @@
     "@tailwindcss/vite": "^4.0.14",
     "@tanstack/eslint-plugin-query": "^5.90.2",
     "@tanstack/eslint-plugin-router": "^1.133.19",
-    "@types/pg": "^8.11.10",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
     "babel-plugin-react-compiler": "latest",
-    "drizzle-kit": "^0.31.4",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-react-compiler": "latest",

@@ -28,11 +28,12 @@ Create a `.env` file with:
 VITE_SUPABASE_URL=
 VITE_SUPABASE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-DATABASE_URL=
 YOUTUBE_API_KEY=
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5.4-mini
 ```
+
+`SUPABASE_SERVICE_ROLE_KEY` is only needed for server-admin Supabase operations.
 
 `YOUTUBE_API_KEY` is optional. When present, YouTube URLs auto-fill official metadata from the YouTube Data API. TikTok and Instagram are manual-first in this MVP.
 

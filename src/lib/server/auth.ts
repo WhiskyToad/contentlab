@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { getCookies, setCookie } from '@tanstack/react-start/server'
 import type { CookieOptions } from '@supabase/ssr'
+import type { Database } from '~/lib/database.types'
 
 /**
  * Server-side Supabase client with cookie bridging.
@@ -14,7 +15,7 @@ export function getSupabaseServerClient() {
   if (!supabaseUrl) throw new Error('Missing VITE_SUPABASE_URL')
   if (!supabaseKey) throw new Error('Missing VITE_SUPABASE_KEY')
 
-  return createServerClient(supabaseUrl, supabaseKey, {
+  return createServerClient<Database>(supabaseUrl, supabaseKey, {
     cookieOptions: {
       path: '/',
       sameSite: 'lax',

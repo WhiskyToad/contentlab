@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '~/lib/database.types'
 
 function requireEnv(name: string): string {
   const v = process.env[name]
@@ -7,11 +8,11 @@ function requireEnv(name: string): string {
 }
 
 export function getSupabaseAnonClient() {
-  return createClient(requireEnv('VITE_SUPABASE_URL'), requireEnv('VITE_SUPABASE_KEY'))
+  return createClient<Database>(requireEnv('VITE_SUPABASE_URL'), requireEnv('VITE_SUPABASE_KEY'))
 }
 
 export function getSupabaseServiceRoleClient() {
-  return createClient(
+  return createClient<Database>(
     requireEnv('VITE_SUPABASE_URL'),
     requireEnv('SUPABASE_SERVICE_ROLE_KEY')
   )

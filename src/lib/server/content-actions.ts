@@ -14,6 +14,7 @@ import {
   type AiHelperResult,
 } from '~/schema'
 import { parseVideoUrl } from '~/lib/video-utils'
+import type { TablesInsert, TablesUpdate } from '~/lib/database.types'
 
 const VIDEOS_SELECT = '*'
 const SCRIPTS_SELECT = '*'
@@ -79,7 +80,7 @@ export const createVideoFromUrl = createServerFn({ method: 'POST' })
         : {}
     const aiMetadata = await inferVideoMetadata(input.url, youtubeMetadata)
 
-    const insertPayload: Record<string, unknown> = {
+    const insertPayload: TablesInsert<'videos'> = {
       user_id: user.id,
       url: input.url,
       platform: parsed.platform,
@@ -440,7 +441,7 @@ export const runScriptHelper = createServerFn({ method: 'POST' })
       }
 
       if (input.entityType === 'script') {
-        const scriptUpdate: Record<string, string> = {}
+        const scriptUpdate: TablesUpdate<'scripts'> = {}
         if (result.hook) scriptUpdate.hook = result.hook
         if (result.cta) scriptUpdate.cta = result.cta
         if (result.rewrites?.[0]) scriptUpdate.body = result.rewrites[0]
